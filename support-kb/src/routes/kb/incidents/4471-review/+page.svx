@@ -1,0 +1,67 @@
+---
+layout: runbook
+title: '#4471 reviewed: two date problems, not one queued fix'
+owner: bennygesserit with omp
+status: investigated
+reviewed: '2026-11-09'
+signature: 'omp / bennygesserit / S01E03 / 2026-11-09'
+---
+
+<script>
+  import CauseTable from '#lib/kb/CauseTable.svelte';
+  import QueueTimeline from '#lib/kb/QueueTimeline.svelte';
+  import DedupeExplorer from '#lib/kb/DedupeExplorer.svelte';
+  import ReportAudit from '#lib/kb/ReportAudit.svelte';
+  import RenderStamp from '#lib/kb/RenderStamp.svelte';
+  import Callout from '#lib/kb/Callout.svelte';
+</script>
+
+The [original incident page](/kb/incidents/4471) says that all the reports are one known parser issue with one fix queued. Its computed table does not support that conclusion. This review separates the two problems using the exported tenant directory, channel and booking-form behavior. It does not claim either fix has shipped.
+
+<Callout kind="warn">
+Do not close every report in #4471 when the parser is fixed. The booking-v3 hint is a separate problem. The table below assigns reports using the current model; unresolved symptoms remain visible below it.
+</Callout>
+
+## What the executable knowledge shows
+
+<CauseTable ticket={4471} />
+
+### Shared month-first parser
+
+The shared parser reads dates month first even when a tenant writes day first. For example, harbour.dental report R-41200 describes 7 April becoming 4 July. A tenant can have this parser problem through the app or email even if it runs booking-v3; having that form does not turn all its reports into hint reports.
+
+Track this separately: [parser issue #2](https://github.com/bennygesserit/megadev-w01c03/issues/2).
+
+### Booking-v3 hint contradicts tenant date order
+
+The booking-v3 date field prints MM/DD/YYYY, while its form reads input in the tenant's day-first order. This affects form submissions for alder.physio, copper.studio and pale.harbour. Booking-v2 prints DD/MM/YYYY. Copper.studio form report R-41230 and alder.physio form report R-41241 are examples of the separate hint path, irrespective of their intake tags or browser locales.
+Track this separately: [form hint issue #1](https://github.com/bennygesserit/megadev-w01c03/issues/1).
+
+Correct the hint to match tenant parsing, and verify the form and shared-parser paths independently. A parser fix alone does not correct misleading form instructions.
+
+## Counting method and limits
+Counts are derived at render time: reports-4471.json → uniqueById → reports merged into #4471 → tenantOf → causeOf → groupByCause. Tenant locale, not browserLocale, determines date order through Intl.DateTimeFormat. Form version and channel distinguish the hint path. Intake tags are guesses, not ground truth.
+
+<ReportAudit />
+
+## Read the two clocks separately
+
+<QueueTimeline ticket={4471} />
+
+Received timestamps show when people reported trouble; merged timestamps show desk processing. The report history starts in April, before the bulk merge in July, and continues into October. “Known” is a queue label, not evidence that all symptoms share a cause or that a fix worked.
+
+## Triage: match causes, not subject lines
+
+The [triage prose](/kb/triage/dedupe) and [accepted decision 0001](/kb/decisions/0001-dedupe-by-subject) prescribe merging on normalized subject alone. Both were reviewed in June 2024; the runbook marks that guidance stale. The live explorer instead compares tenant-aware causes. Identical subjects can hide different bugs, and different subjects can describe the same one.
+
+<DedupeExplorer />
+
+Use the explorer's evidence when triaging: app and email can share a cause; the same tenant's form and app can differ; the same subject and channel can differ across tenants. An unknown tenant has no classified cause and must not be merged merely because the subject matches. Read the report body when it contradicts the model.
+
+The accepted decision is left unchanged, as required by the KB's immutable-decision convention. Proposed replacement: record a new decision that supersedes subject-only merging with evidence-backed cause matching; leave unclassified and contradictory reports for review. Do not represent that proposal as an accepted desk policy.
+
+## Scope and follow-up
+
+This page describes the 4 October export, not a live desk snapshot. Its tables recompute when the data changes; its conclusions still need re-reading against new reports. Keep one engineering issue per problem, reconcile counts after desk updates, and investigate the outliers before claiming all affected bookings are explained or repaired. Until a fix is verified, support should confirm affected bookings directly rather than promise that a queued parser change resolves every report.
+
+<RenderStamp {signature} />
