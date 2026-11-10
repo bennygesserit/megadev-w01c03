@@ -14,6 +14,11 @@ Counts come from the exported components, not intake tags: 427 export rows becom
 model's count and are explicitly discussed, not asserted to have a proven cause.
 The accepted historical decision and original incident page are preserved.
 
+The subsequent desk update reports #4471 closed on 5 October: the parser was
+fixed, while the hint was not fixed because booking-v3 was retired. Issue #2 is
+closed as completed; issue #1 is closed as not planned. These dispositions
+come from the course, not independent production verification.
+
 ## Run the knowledge base
 
 Requires Node.js 20.19+ or 22.12+ and npm.
